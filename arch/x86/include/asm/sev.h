@@ -533,6 +533,9 @@ void snp_msg_free(struct snp_msg_desc *mdesc);
 int snp_send_guest_request(struct snp_msg_desc *mdesc, struct snp_guest_req *req);
 
 int snp_svsm_vtpm_send_command(u8 *buffer);
+int snp_svsm_ocp_list_sources(u8 *buffer, u64 first_entry, u64 num_entries, u64 *entries_returned);
+int snp_svsm_ocp_read_source(u8 *buffer, u64 source_idx, u64 bytes_to_read, u64 offset, u64 *bytes_read);
+int snp_svsm_ocp_write_source(u8 *buffer, u64 source_idx, u64 bytes_to_write, u64 offset, u64 *bytes_written);
 
 void __init snp_secure_tsc_prepare(void);
 void __init snp_secure_tsc_init(void);
@@ -641,6 +644,9 @@ static inline void snp_msg_free(struct snp_msg_desc *mdesc) { }
 static inline int snp_send_guest_request(struct snp_msg_desc *mdesc,
 					 struct snp_guest_req *req) { return -ENODEV; }
 static inline int snp_svsm_vtpm_send_command(u8 *buffer) { return -ENODEV; }
+static int snp_svsm_ocp_list_sources(u8 *buffer, u64 first_entry, u64 num_entries, u64 *entries_returned) { return -ENODEV };
+static int snp_svsm_ocp_read_source(u8 *buffer, u64 source_idx, u64 bytes_to_read, u64 offset, u64 *bytes_read) { return -ENODEV; }
+static int snp_svsm_ocp_write_source(u8 *buffer, u64 source_idx, u64 bytes_to_write, u64 offset, u64 *bytes_written) { return -ENODEV; }
 static inline void __init snp_secure_tsc_prepare(void) { }
 static inline void __init snp_secure_tsc_init(void) { }
 static inline void sev_evict_cache(void *va, int npages) {}
