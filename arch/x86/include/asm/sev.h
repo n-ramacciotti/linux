@@ -435,6 +435,9 @@ struct svsm_call {
 #define SVSM_VTPM_QUERY			0
 #define SVSM_VTPM_CMD			1
 
+#define SVSM_OCP_CALL(x)		((5ULL << 32) | (x))
+#define SVSM_OCP_LIST			0
+
 #ifdef CONFIG_AMD_MEM_ENCRYPT
 
 extern u8 snp_vmpl;
