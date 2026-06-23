@@ -1397,6 +1397,14 @@ static struct platform_device tpm_svsm_device = {
 
 static int __init snp_init_platform_device(void)
 {
+	u8 *buffer;
+	u64 first_entry;
+	u64 num_entries;
+	u64 entries_returned;
+	int ret;
+
+	pr_err("Initialiazing\n");
+
 	if (!cc_platform_has(CC_ATTR_GUEST_SEV_SNP))
 		return -ENODEV;
 
@@ -1407,7 +1415,104 @@ static int __init snp_init_platform_device(void)
 	    platform_device_register(&tpm_svsm_device))
 		return -ENODEV;
 
-	pr_info("SNP guest platform devices initialized.\n");
+	buffer  = kzalloc(PAGE_SIZE, GFP_KERNEL);
+
+	if (!buffer) {
+		pr_err("buffer allocation failed\n");
+		return -ENOMEM;
+	}
+
+	first_entry = 0;
+	num_entries = 1;
+	entries_returned = 0;
+
+	// This should work
+	ret = snp_svsm_ocp_list_sources(buffer, first_entry, num_entries, &entries_returned);
+
+	if (ret < 0){
+		pr_err("Error %d\n", ret);
+		return -ENODEV;
+	} else if (entries_returned != 1) {
+			pr_err("Error should have returned only one but returned %d\n", ret);
+			return -ENODEV;
+	} else {
+
+		// show the content in the log
+		print_hex_dump(
+			KERN_ERR, "ENTRIES: ", DUMP_PREFIX_OFFSET,
+			16, 1, buffer, 128, true
+		);
+	}
+
+	memset(buffer, 0, PAGE_SIZE);
+
+	first_entry = 1;
+	num_entries = 1;
+	entries_returned = 0;
+
+	// This should not fail for the current svsm implementatino
+	// Even if first_entry is 0  and is the only entry
+	// this should return 0
+	ret = snp_svsm_ocp_list_sources(buffer, first_entry, num_entries, &entries_returned);
+	if (ret < 0){
+		pr_err("unexpected failure %d\n", ret);
+	} else if (entries_returned != 0) {
+		pr_err("Should have failed %llu and ret %d\n", entries_returned, ret);
+		print_hex_dump(
+			KERN_ERR, "ENTRIES: ", DUMP_PREFIX_OFFSET,
+			16, 1, buffer, 128, true
+		);
+		return -ENODEV;
+	} else {
+		pr_err("This test correctly terminated %d\n", ret);
+	}
+
+	memset(buffer, 0, PAGE_SIZE);
+
+	first_entry = 0;
+	num_entries = 2;
+	entries_returned = 0;
+
+	// This should work with ret = 1 even with 2 entries asked
+	ret = snp_svsm_ocp_list_sources(buffer, first_entry, num_entries, &entries_returned);
+	if (ret < 0){
+		pr_err("Error %d\n", ret);
+		return -ENODEV;
+	} else if (entries_returned != 1) {
+		pr_err("Error should have returned only one but returned %d\n", ret);
+		return -ENODEV;
+	} else {
+		// show the content in the log
+		print_hex_dump(
+			KERN_ERR, "ENTRIES: ", DUMP_PREFIX_OFFSET,
+			16, 1, buffer, 128, true
+		);
+	}
+
+	memset(buffer, 0, PAGE_SIZE);
+
+	first_entry = 0;
+	num_entries = 0;
+	entries_returned = 0;
+
+	// this should fail as num entries is zero
+	// invalid parameter from svsm
+	ret = snp_svsm_ocp_list_sources(buffer, first_entry, num_entries, &entries_returned);
+	if (ret < 0 ){
+		pr_err("expected failure %d\n", ret);
+	} else {
+		// show the content in the log
+		print_hex_dump(
+			KERN_ERR, "ENTRIES: ", DUMP_PREFIX_OFFSET,
+			16, 1, buffer, 128, true
+		);
+		pr_err("Should have failed ret %d  entries num %llu\n", ret, &entries_returned);
+		return -ENODEV;
+	}
+
+	kfree(buffer);
+
+	pr_err("SNP guest platform devices initialized.\n");
 	return 0;
 }
 device_initcall(snp_init_platform_device);

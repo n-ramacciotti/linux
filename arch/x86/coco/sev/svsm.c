@@ -360,3 +360,24 @@ bool snp_svsm_vtpm_probe(void)
 	/* Check platform commands contains TPM_SEND_COMMAND - platform command 8 */
 	return call.rcx_out & BIT_ULL(8);
 }
+
+int snp_svsm_ocp_list_sources(u8 *buffer, u64 first_entry, u64 num_entries, u64 *entries_returned)
+{
+	struct svsm_call call = {};
+	int ret;
+
+	call.caa = svsm_get_caa();
+	call.rax = SVSM_OCP_CALL(SVSM_OCP_LIST);
+	call.rcx = first_entry;
+	call.rdx = __pa(buffer);
+	call.r8 = num_entries;
+
+	ret = svsm_perform_call_protocol(&call);
+
+	if (ret < 0){
+		return ret;
+	}
+
+	*entries_returned = call.rcx_out;
+	return ret;
+}

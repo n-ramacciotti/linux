@@ -69,6 +69,7 @@ void vc_forward_exception(struct es_em_ctxt *ctxt);
 void svsm_pval_pages(struct snp_psc_desc *desc);
 int svsm_perform_call_protocol(struct svsm_call *call);
 bool snp_svsm_vtpm_probe(void);
+int snp_svsm_ocp_list_sources(u8 *buffer, u64 first_entry, u64 num_entries, u64 *entries_returned);
 
 static inline u64 sev_es_rd_ghcb_msr(void)
 {
